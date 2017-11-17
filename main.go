@@ -83,5 +83,11 @@ func createUpdateProduct() Product {
 		log.Fatalf("[Update Product] %s ", err)
 	}
 
+
+	return product
+}
+
+func getProductById(id string) Product {
+	product,err:=productRepository.GetById(id)
 	return product
 }

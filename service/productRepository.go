@@ -37,12 +37,10 @@ func (r *ProductRepository) Update(o Product) (err error) {
 	return
 }
 
-func (r *ProductRepository) GetById(id string) Product {
+func (r *ProductRepository) GetById(id string) (Product,error) {
 	var product Product
-	if err := r.C.FindId(bson.ObjectIdHex(id)).One(&product); err != nil {
-		log.Fatalf("[Get Product By ID] %s ", err)
-	}
-	return product
+	err := r.C.FindId(bson.ObjectIdHex(id)).One(&product)
+	return product,err
 }
 
 func (r *ProductRepository) GetAll() []Product {
