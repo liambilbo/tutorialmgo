@@ -6,34 +6,33 @@ import (
 	"gopkg.in/mgo.v2/bson"
 )
 
-type ProductRepository struct {
+type CategoryRepository struct {
 	C *mgo.Collection
 }
 
-func NewProductRepository(c *mgo.Collection) *ProductRepository {
-	return &ProductRepository{c}
+func NewCategoryRepository(c *mgo.Collection) *CategoryRepository {
+	return &CategoryRepository{c}
 }
 
-func (r *ProductRepository) Create(o *Product) (err error) {
+func (r *CategoryRepository) Create(o *Category) (err error) {
 	o.Id = bson.NewObjectId()
 	err = r.C.Insert(o)
 	return
 }
 
-func (r *ProductRepository) Update(o Product) (err error) {
+func (r *CategoryRepository) Update(o Category) (err error) {
 	err = r.C.Update(bson.M{"_id": o.Id},o)
 	return
-
 }
 
 
-func (r *ProductRepository) GetById(id string) (Product,error) {
+func (r *CategoryRepository) GetById(id string) (Product,error) {
 	var product Product
 	err := r.C.FindId(bson.ObjectIdHex(id)).One(&product)
 	return product,err
 }
 
-func (r *ProductRepository) GetAll() []Product {
+func (r *CategoryRepository) GetAll() []Product {
 	query := r.C.Find(bson.M{})
 	iter := query.Iter()
 	var result Product

@@ -1,16 +1,19 @@
 package main
 
 import (
-	"fmt"
-	. "github.com/liambilbo/hellomgo/service"
+	. "github.com/liambilbo/tutorialmgo/service"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
 	"log"
 	"time"
+	"fmt"
 )
 
 var productRepository *ProductRepository
-var id string
+var categoryRepository *CategoryRepository
+
+var idProduct string
+var idCategory string
 
 func init() {
 
@@ -22,14 +25,19 @@ func init() {
 		log.Fatalf("[MongoDB session] ;: %s \n", err)
 	}
 
-	collection := session.DB("tutorial").C("products")
-	collection.RemoveAll(nil)
-	productRepository = NewProductRepository(collection)
+	colproducts := session.DB("tutorial").C("products")
+	colproducts.RemoveAll(nil)
+	productRepository = NewProductRepository(colproducts)
+
+	colcategories := session.DB("tutorial").C("categories")
+	colcategories.RemoveAll(nil)
+	categoryRepository = NewCategoryRepository(colcategories)
 
 }
 
 func main() {
 	createUpdateProduct()
+	createUpdateCategory()
 }
 
 func date(d string) time.Time {
@@ -44,7 +52,7 @@ func createUpdateProduct() Product {
 	product := Product{
 		Slug:        "wheelbarrow-9092",
 		Name:        "Extra Large Wheelbarrow",
-		Sku:         "9092",
+		Sku:         "90923",
 		Description: "Heavy duty wheelbarrow...",
 		Details: Details{
 			Weight:       47,
@@ -59,9 +67,9 @@ func createUpdateProduct() Product {
 			Retail: 589700,
 			Sale:   489700,
 		},
-		PriceHistory: []Price{
-			Price{Sale: 429700, Retail: 529700, RangeDate: &RangeDate{Start: date("2010-4-1"), End: date("2010-4-8")}},
-			Price{Sale: 529700, Retail: 529700, RangeDate: &RangeDate{Start: date("2010-4-9"), End: date("2010-4-6")}},
+		HistoricPrices: []Price{
+			Price{Sale: 429700, Retail: 529700, RangeDate: RangeDate{Start: date("2010-4-1"), End: date("2010-4-8")}},
+			Price{Sale: 529700, Retail: 529700, RangeDate: RangeDate{Start: date("2010-4-9"), End: date("2010-4-6")}},
 		},
 		PrimaryCategory: bson.ObjectIdHex("6a5b1476238d3b4dd5000048"),
 		CategoryIds:     []bson.ObjectId{bson.ObjectIdHex("6a5b1476238d3b4dd5000048"), bson.ObjectIdHex("6a5b1476238d3b4dd5000049")},
@@ -69,13 +77,17 @@ func createUpdateProduct() Product {
 		Tags:            []string{"tools", "gardening", "soil"},
 	}
 
+	createIndexSlug()
+
 	if err := productRepository.Create(&product); err != nil {
 		log.Fatalf("[Create Product] : %s \n", err)
 	}
 
-	id = product.Id.Hex()
+	/*
 
-	fmt.Printf("[Create Product] id %s \n", id)
+	idProduct = product.Id.Hex()
+
+	fmt.Printf("[Create Product] id %s \n", idProduct)
 
 	product.Tags = append(product.Tags, "ligth")
 
@@ -84,10 +96,48 @@ func createUpdateProduct() Product {
 	}
 
 
+*/
+
+
 	return product
 }
 
 func getProductById(id string) Product {
-	product,err:=productRepository.GetById(id)
+	product,_:=productRepository.GetById(id)
 	return product
+}
+
+
+func createIndexSlug() {
+
+	index := mgo.Index{
+		Key: []string{"slug"},
+		Unique: true,
+		DropDups: true,
+		Background: true, // See notes.
+		Sparse: true,
+	}
+
+	productRepository.C.EnsureIndex(index)
+}
+
+
+func createUpdateCategory(){
+	category:=Category{
+		CategoryId:CategoryId{Id:bson.ObjectIdHex("6a5b1476238d3b4dd5000048"),
+		                    Name:"Gardening Tools",
+		                    Slug:"gardening-tools",},
+		Description:"Gardening gadgets galore!",
+		ParentId:bson.ObjectIdHex("55804822812cb336b78728f9"),
+		Ancestors:[]CategoryId{CategoryId{Id:bson.ObjectIdHex("558048f0812cb336b78728fa"),Name:"Home",Slug:"home"},
+			CategoryId{Id:bson.ObjectIdHex("55804822812cb336b78728f9"),Name:"Outdoors",Slug:"outdoors"},},
+	}
+
+
+	if err:=categoryRepository.Create(&category);err!=nil{
+		log.Fatalf("[Creating Category] %s",err)
+	}
+
+	idCategory=category.Id.Hex()
+	fmt.Printf("[Create Category] id %s \n", idProduct)
 }
