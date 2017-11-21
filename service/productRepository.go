@@ -15,7 +15,10 @@ func NewProductRepository(c *mgo.Collection) *ProductRepository {
 }
 
 func (r *ProductRepository) Create(o *Product) (err error) {
-	o.Id = bson.NewObjectId()
+	if o.Id ==*new(bson.ObjectId) {
+		o.Id = bson.NewObjectId()
+	}
+
 	err = r.C.Insert(o)
 	return
 }
@@ -43,4 +46,23 @@ func (r *ProductRepository) GetAll() []Product {
 		products = append(products, result)
 	}
 	return products
+}
+
+func (r *ProductRepository) GetByCategoryId(categoryId string) []Product {
+	query := r.C.Find(bson.M{"category_ids":bson.ObjectIdHex(categoryId)})
+	iter := query.Iter()
+	var result Product
+	var products []Product
+
+	for iter.Next(&result) {
+		fmt.Printf("Result: %v\n", result.Id)
+		products=append(products,result)
+	}
+	return products
+}
+
+func (r *ProductRepository) GetBySlug(slug string) (Product,error) {
+	var product Product
+	err := r.C.Find(bson.M{"slug":slug}).One(&product)
+	return product,err
 }

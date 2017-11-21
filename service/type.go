@@ -47,10 +47,49 @@ type CategoryId struct {
 	Name string `bson:"name" json:"name"`
 }
 type Category struct {
-	CategoryId
+	CategoryId `bson:",inline"`
 	Description string `bson:"description" json:"description"`
 	ParentId bson.ObjectId `bson:"parent_id" json:"parent_id"`
 	Ancestors []CategoryId `bson:"ancestors" json:"ancestors"`
 }
 
+type LineItem struct {
+	Id bson.ObjectId `bson:"_id" json:"id"`
+	Sku string `bson:"sku" json:"sku"`
+	Name string `bson:"name" json:"name"`
+	Quantity int `bson:"quantity" json:"quantity"`
+	Price Price `bson:"price" json:"price"`
+}
 
+type Address struct {
+	Street string `bson:"street" json:"street"`
+	City string `bson:"city" json:"city"`
+	State string `bson:"state" json:"state"`
+	Zip int `bson:"zip" json:"zip"`
+}
+
+type PaymentMethod struct {
+	Name string `bson:"name" json:"name"`
+	PaymentToken string `bson:"payment_token" json:"payment_token"`
+}
+
+
+type Order struct {
+	Id bson.ObjectId `bson:"_id" json:"id"`
+	UserId bson.ObjectId `bson:"user_id" json:"user_id"`
+	State string `bson:"state" json:"state"`
+	LineItems []LineItem `bson:"line_item" json:"line_item"`
+	ShippingAddress Address `bson:"shipping_address" json:"shipping_address"`
+	Subtotal int `bson:"subtotal" json:"subtotal"`
+}
+
+type User struct {
+	Id bson.ObjectId `bson:"_id" json:"id"`
+	UserName string `bson:"username" json:"username"`
+	Email string`bson:"email" json:"email"`
+	FirstName string`bson:"first_name" json:"first_name"`
+	LastName string`bson:"last_name" json:"last_name"`
+	HashedPassword string `bson:"hashed_password" json:"hashed_password"`
+	Addresses []Address `bson:"addresses" json:"addresses"`
+	PaymentMethods PaymentMethod `bson:"payment_methods" json:"payment_methods"`
+}

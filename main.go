@@ -11,6 +11,8 @@ import (
 
 var productRepository *ProductRepository
 var categoryRepository *CategoryRepository
+var orderRepository *OrderRepository
+var userRepository *UserRepository
 
 var idProduct string
 var idCategory string
@@ -33,11 +35,22 @@ func init() {
 	colcategories.RemoveAll(nil)
 	categoryRepository = NewCategoryRepository(colcategories)
 
+	colusers := session.DB("tutorial").C("users")
+	colusers.RemoveAll(nil)
+	userRepository = NewUserRepository(colusers)
+
+	colorders := session.DB("tutorial").C("orders")
+	colorders.RemoveAll(nil)
+	orderRepository = NewOrderRepository(colorders)
+
+
 }
 
 func main() {
 	createUpdateProduct()
 	createUpdateCategory()
+	findProduct()
+	findCategoriesOfAProduct()
 }
 
 func date(d string) time.Time {
@@ -140,4 +153,65 @@ func createUpdateCategory(){
 
 	idCategory=category.Id.Hex()
 	fmt.Printf("[Create Category] id %s \n", idProduct)
+}
+
+func createUpdateOrder(){
+	order:=Order{Id:bson.ObjectIdHex("6a5b1476238d3b4dd5000048"),
+		UserId:bson.ObjectIdHex("4c4b1476238d3b4dd5000001"),
+		State:"CART",
+		LineItems:[]LineItem{LineItem{Id:bson.ObjectIdHex("4c4b1476238d3b4dd5003981"),
+		                              Name:"Extra Large Wheelbarrow",
+		                              Price:Price{Sale:4897,Retail:5897,},
+		                              Sku:"9092",
+		                              Quantity:1,},
+			{Id:bson.ObjectIdHex("4c4b1476238d3b4dd5003982"),
+				Name:"Rubberized Work Glove, Black",
+				Price:Price{Sale:1299,Retail:1499,},
+				Sku:"10027",
+				Quantity:2,},
+				},
+		ShippingAddress:Address{State:"NY",
+		Street: "588 5th Street",
+		City:"Brooklyn",
+		Zip:11215,},
+		Subtotal:1028,
+	}
+
+	orderRepository.Create(&order)
+
+
+
+}
+
+
+
+func findProduct(){
+	products:=productRepository.GetByCategoryId("6a5b1476238d3b4dd5000048")
+	for _,p:=range products{
+		fmt.Println("Product Id : %s \n",p.Id)
+
+	}
+}
+
+func findCategoriesOfAProduct(){
+	product,err:=productRepository.GetBySlug("wheelbarrow-9092")
+	if err!=nil {
+		log.Fatalf("[GetBySlug] %s \n",err)
+	}
+
+	categories:=categoryRepository.GetCategoByIds(convertObjectIdToString(product.CategoryIds))
+
+	for _,v:=range categories{
+		fmt.Printf("[Category of %s] %s \n",product.Slug,v.Id.Hex())
+
+	}
+
+}
+
+func convertObjectIdToString (ids []bson.ObjectId) []string {
+	var result []string
+	for  _,v:=range ids{
+		result=append(result,v.Hex())
+	}
+	return result
 }
