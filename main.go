@@ -13,6 +13,7 @@ var productRepository *ProductRepository
 var categoryRepository *CategoryRepository
 var orderRepository *OrderRepository
 var userRepository *UserRepository
+var reviewRepository *ReviewRepository
 
 var idProduct string
 var idCategory string
@@ -44,6 +45,11 @@ func init() {
 	orderRepository = NewOrderRepository(colorders)
 
 
+	colreviews := session.DB("tutorial").C("reviews")
+	colreviews.RemoveAll(nil)
+	reviewRepository = NewReviewRepository(colreviews)
+
+
 }
 
 func main() {
@@ -51,6 +57,10 @@ func main() {
 	createUpdateCategory()
 	findProduct()
 	findCategoriesOfAProduct()
+	createUpdateUser()
+	createUpdateOrder()
+	createUpdateReview()
+	findReviewsOfAProduct()
 }
 
 func date(d string) time.Time {
@@ -96,12 +106,13 @@ func createUpdateProduct() Product {
 		log.Fatalf("[Create Product] : %s \n", err)
 	}
 
-	/*
+
 
 	idProduct = product.Id.Hex()
 
 	fmt.Printf("[Create Product] id %s \n", idProduct)
 
+/*
 	product.Tags = append(product.Tags, "ligth")
 
 	if err := productRepository.Update(product); err != nil {
@@ -177,12 +188,66 @@ func createUpdateOrder(){
 		Subtotal:1028,
 	}
 
-	orderRepository.Create(&order)
+	if err:=orderRepository.Create(&order); err!=nil {
+		log.Fatalf("[Creating Order] %s",err)
+	}
 
+}
+
+
+func createUpdateUser(){
+	user:=User{Id:bson.ObjectIdHex("4c4b1476238d3b4dd5000001"),
+			UserName:"kbanker",
+			Email:"kylebanker@gmail.com",
+			FirstName:"Kyle",
+			LastName:"Banker",
+			HashedPassword:"bd1cfa194c3a603e7186780824b04419",
+			Addresses:[]Address{Address{Name:"home",
+										Street:"588 5th Street",
+										City:"Brooklyn",
+										State:"NY",
+										Zip: 11215},
+								Address{Name:"work",
+									Street:"1 E. 23rd Street",
+									City:"New York",
+									State:"NY",
+									Zip: 10010},
+										},
+	}
+
+	if err:=userRepository.Create(&user); err!=nil {
+		log.Fatalf("[Creating User] %s",err)
+	}
+
+
+
+	userRepository.GetByNameAndPassword("kbanker","bd1cfa194c3a603e7186780824b04419")
 
 
 }
 
+func createUpdateReview(){
+	review:=Review{Id:bson.ObjectIdHex("4c4b1476238d3b4dd5000041"),
+		ProductId:bson.ObjectIdHex(idProduct),
+		Date:date("2010-5-7"),
+		Title:"Amazing",
+		Text:"Has a squeaky wheel, but still a darn good wheelbarrow.",
+		Rating:4,
+		UserId:bson.ObjectIdHex("4c4b1476238d3b4dd5000042"),
+		UserName:"dgreenthumb",
+		HelpfulVotes:3,
+		VoterIds:[]bson.ObjectId{
+			bson.ObjectIdHex("4c4b1476238d3b4dd5000033"),
+			bson.ObjectIdHex("7a4f0376238d3b4dd5000003"),
+			bson.ObjectIdHex("92c21476238d3b4dd5000032"),
+		},
+	}
+
+	if err:=reviewRepository.Create(&review); err!=nil {
+		log.Fatalf("[Creating Review] %s",err)
+	}
+
+}
 
 
 func findProduct(){
@@ -207,6 +272,24 @@ func findCategoriesOfAProduct(){
 	}
 
 }
+
+
+func findReviewsOfAProduct(){
+	product,err:=productRepository.GetBySlug("wheelbarrow-9092")
+	if err!=nil {
+		log.Fatalf("[GetBySlug] %s \n",err)
+	}
+
+	reviews :=reviewRepository.GetByProductId(product.Id.Hex(),Page{20,0})
+
+
+	for _,v:=range reviews{
+		fmt.Printf("[Reviews of product %s] %s \n",product.Slug,v.Id.Hex())
+
+	}
+
+}
+
 
 func convertObjectIdToString (ids []bson.ObjectId) []string {
 	var result []string
