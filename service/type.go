@@ -66,7 +66,8 @@ type Address struct {
 	City string `bson:"city" json:"city"`
 	State string `bson:"state" json:"state"`
 	Zip int `bson:"zip" json:"zip"`
-}
+	Name string `bson:"name,omitempty" json:"name"`
+	}
 
 type PaymentMethod struct {
 	Name string `bson:"name" json:"name"`
@@ -92,4 +93,35 @@ type User struct {
 	HashedPassword string `bson:"hashed_password" json:"hashed_password"`
 	Addresses []Address `bson:"addresses" json:"addresses"`
 	PaymentMethods PaymentMethod `bson:"payment_methods" json:"payment_methods"`
+}
+
+
+type Review struct {
+	Id bson.ObjectId `bson:"_id" json:"id"`
+	ProductId bson.ObjectId `bson:"product_id" json:"product_id"`
+	Date time.Time`bson:"date" json:"date"`
+	Title string`bson:"title" json:"title"`
+	Text string`bson:"text" json:"text"`
+	Rating  int `bson:"rating" json:"rating"`
+	UserId bson.ObjectId `bson:"user_id" json:"user_id"`
+	UserName string `bson:"user_name" json:"user_name"`
+	HelpfulVotes  int   `bson:"helpful_votes" json:"helpful_votes"`
+	VoterIds []bson.ObjectId `bson:"voter_ids" json:"voter_ids"`
+}
+
+type Page struct{
+	Size int
+	Number int
+}
+
+func (p *Page) add(pos int) Page {
+	return Page{p.Size,p.Number + pos}
+}
+
+func (p *Page) skip() int {
+	return p.Size * (p.Number - 1)
+}
+
+func (p *Page) limit() int {
+	return p.Size
 }

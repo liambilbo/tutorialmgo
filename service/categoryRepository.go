@@ -59,3 +59,5 @@ func (r *CategoryRepository) GetCategoByIds(ids []string) []Category {
 	query:=r.C.Find(bson.M{"_id":bson.M{"$in":objectIds}})
 	return r.getByQuery(query)
 }
+
+

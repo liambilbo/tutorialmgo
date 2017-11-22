@@ -35,6 +35,13 @@ func (r *UserRepository) GetById(id string) (User,error) {
 }
 
 
+func (r *UserRepository) GetByNameAndPassword(username string,password string ) (User,error) {
+	var user User
+	err := r.C.Find(bson.M{"username":username,"hashed_password":password}).Select(bson.M{"_id":1}).One(&user)
+	return user,err
+}
+
+
 func (r *UserRepository) getByQuery(query *mgo.Query) []Order {
 	iter := query.Iter()
 	var result Order
