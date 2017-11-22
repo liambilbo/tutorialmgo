@@ -1,7 +1,6 @@
 package service
 
 import (
-"fmt"
 "gopkg.in/mgo.v2"
 "gopkg.in/mgo.v2/bson"
 )
@@ -41,14 +40,21 @@ func (r *UserRepository) GetByNameAndPassword(username string,password string ) 
 	return user,err
 }
 
-
-func (r *UserRepository) getByQuery(query *mgo.Query) []Order {
-	iter := query.Iter()
-	var result Order
-	var orders []Order
-	for iter.Next(&result) {
-		fmt.Printf("Result: %v\n", result.Id)
-		orders = append(orders, result)
-	}
-	return orders
+func (r *UserRepository) GetByLastName(lastName string,page Page) []User {
+	var users []User
+	r.C.Find(bson.M{"last_name":lastName}).Skip(page.skip()).Limit(page.limit()).All(&users)
+	return users
 }
+
+func (r *UserRepository) GetByLastNamePattern(lastName string,page Page) []User {
+	var users []User
+	r.C.Find(bson.M{"last_name":bson.M{"$regex":bson.RegEx{lastName, ""}}}).Skip(page.skip()).Limit(page.limit()).All(&users)
+	return users
+}
+
+func (r *UserRepository) GetByZip(statelow int,statehight int,page Page) []User {
+	var users []User
+	r.C.Find(bson.M{"addresses.zip":bson.M{"$gt":statelow,"$lt":statehight}}).Skip(page.skip()).Limit(page.limit()).All(&users)
+	return users
+}
+

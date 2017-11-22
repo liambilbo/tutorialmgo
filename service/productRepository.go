@@ -66,3 +66,10 @@ func (r *ProductRepository) GetBySlug(slug string) (Product,error) {
 	err := r.C.Find(bson.M{"slug":slug}).One(&product)
 	return product,err
 }
+
+func (r *ProductRepository) GetByColorAndManufacturer(color string,manufacturer string,page Page) []Product {
+	var products []Product
+	r.C.Find(bson.M{"$or":bson.M{"details.color":color,"details.manufacturer":manufacturer}}).Skip(page.skip()).Limit(page.limit()).All(&products)
+	return products
+}
+

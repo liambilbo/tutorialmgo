@@ -48,8 +48,6 @@ func init() {
 	colreviews := session.DB("tutorial").C("reviews")
 	colreviews.RemoveAll(nil)
 	reviewRepository = NewReviewRepository(colreviews)
-
-
 }
 
 func main() {
@@ -111,6 +109,10 @@ func createUpdateProduct() Product {
 	idProduct = product.Id.Hex()
 
 	fmt.Printf("[Create Product] id %s \n", idProduct)
+
+
+	products:=productRepository.GetByColorAndManufacturer("Green","Acme",Page{1,1})
+	fmt.Println(len(products))
 
 /*
 	product.Tags = append(product.Tags, "ligth")
@@ -223,7 +225,13 @@ func createUpdateUser(){
 
 	userRepository.GetByNameAndPassword("kbanker","bd1cfa194c3a603e7186780824b04419")
 
+	users1:=userRepository.GetByLastName("Banker",Page{1,1})
+	users2:=userRepository.GetByLastNamePattern("^Ba",Page{1,1})
+	users3:=userRepository.GetByZip(10019,10040,Page{1,1})
 
+	fmt.Println(len(users1))
+	fmt.Println(len(users2))
+	fmt.Println(len(users3))
 }
 
 func createUpdateReview(){
@@ -279,15 +287,10 @@ func findReviewsOfAProduct(){
 	if err!=nil {
 		log.Fatalf("[GetBySlug] %s \n",err)
 	}
-
 	reviews :=reviewRepository.GetByProductId(product.Id.Hex(),Page{20,0})
-
-
 	for _,v:=range reviews{
 		fmt.Printf("[Reviews of product %s] %s \n",product.Slug,v.Id.Hex())
-
 	}
-
 }
 
 
