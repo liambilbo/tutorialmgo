@@ -161,6 +161,19 @@ func FindReviews(t *testing.T) {
 
 	reviews :=reviewRepository.GetByProductId(product.Id.Hex(),Page{20,1})
 	assert.NotZerof(t,len(reviews),"[GetByProductId] Reviews not founded")
+
+	reviews =reviewRepository.GetByWhere("function() { return this.helpful_votes > 2; }",Page{20,1})
+	assert.NotZerof(t,len(reviews),"[GetByWhere] Reviews not founded")
+
+	reviews =reviewRepository.GetByWhere("function() { return this.helpful_votes > 2; }",Page{20,1})
+	assert.NotZerof(t,len(reviews),"[GetByWhere] Reviews not founded")
+
+	reviews =reviewRepository.GetByWhere("(this.helpful_votes) > 2",Page{20,1})
+	assert.NotZerof(t,len(reviews),"[GetByWhere] Reviews not founded")
+
+	reviews =reviewRepository.GetByText(bson.RegEx{"Wheel|worst"," i"},Page{20,1})
+	assert.NotZerof(t,len(reviews),"[GetByText] Reviews not founded")
+
 }
 
 func FindUsers(t *testing.T) {
@@ -185,7 +198,8 @@ func FindUsers(t *testing.T) {
 	users=userRepository.GetByAddressElem(bson.M{"name":"home","state":"NY"},Page{1,1})
 	assert.NotZerof(t,len(users),"[GetByAddressElem] Users not founded")
 
-
+	users=userRepository.GetByAddressSize(2,Page{1,1})
+	assert.NotZerof(t,len(users),"[GetByAddressSize] Users not founded")
 
 	product,err:=productRepository.GetBySlug("wheelbarrow-9092")
 	if err!=nil {

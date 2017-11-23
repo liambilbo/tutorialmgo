@@ -41,6 +41,20 @@ func (r *ReviewRepository) GetByProductId(id string,page Page) []Review {
 }
 
 
+func (r *ReviewRepository) GetByWhere(where string,page Page) []Review {
+	var review []Review
+	r.C.Find(bson.M{"$where":where}).Sort("-helpful_votes").Limit(page.limit()).Skip(page.skip()).All(&review)
+	return review
+}
+
+
+func (r *ReviewRepository) GetByText(regexp bson.RegEx,page Page) []Review {
+	var review []Review
+	r.C.Find(bson.M{"text":regexp}).Sort("-helpful_votes").Limit(page.limit()).Skip(page.skip()).All(&review)
+	return review
+}
+
+
 func (r *ReviewRepository) getByQuery(query *mgo.Query) []Review {
 	iter := query.Iter()
 	var result Review

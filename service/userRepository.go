@@ -70,3 +70,9 @@ func (r *UserRepository) GetByAddressElem(elem bson.M,page Page) []User {
 	return users
 }
 
+
+func (r *UserRepository) GetByAddressSize(size int,page Page) []User {
+	var users []User
+	r.C.Find(bson.M{"addresses":bson.M{"$size":size}}).Skip(page.skip()).Limit(page.limit()).All(&users)
+	return users
+}
