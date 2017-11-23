@@ -52,9 +52,21 @@ func (r *UserRepository) GetByLastNamePattern(lastName string,page Page) []User 
 	return users
 }
 
-func (r *UserRepository) GetByZip(statelow int,statehight int,page Page) []User {
+func (r *UserRepository) GetByZip(ziplow int,ziphigh int,page Page) []User {
 	var users []User
-	r.C.Find(bson.M{"addresses.zip":bson.M{"$gt":statelow,"$lt":statehight}}).Skip(page.skip()).Limit(page.limit()).All(&users)
+	r.C.Find(bson.M{"addresses.zip":bson.M{"$gt":ziplow,"$lt":ziphigh}}).Skip(page.skip()).Limit(page.limit()).All(&users)
+	return users
+}
+
+func (r *UserRepository) GetByFirstAddressState(state string,page Page) []User {
+	var users []User
+	r.C.Find(bson.M{"addresses.0.state":state}).Skip(page.skip()).Limit(page.limit()).All(&users)
+	return users
+}
+
+func (r *UserRepository) GetByAddressElem(elem bson.M,page Page) []User {
+	var users []User
+	r.C.Find(bson.M{"addresses":bson.M{"$elemMatch":elem}}).Skip(page.skip()).Limit(page.limit()).All(&users)
 	return users
 }
 

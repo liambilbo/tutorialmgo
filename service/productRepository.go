@@ -69,7 +69,20 @@ func (r *ProductRepository) GetBySlug(slug string) (Product,error) {
 
 func (r *ProductRepository) GetByColorAndManufacturer(color string,manufacturer string,page Page) []Product {
 	var products []Product
-	r.C.Find(bson.M{"$or":bson.M{"details.color":color,"details.manufacturer":manufacturer}}).Skip(page.skip()).Limit(page.limit()).All(&products)
+	r.C.Find(bson.M{"$or":[]bson.M{bson.M{"details.color":color},bson.M{"details.manufacturer":manufacturer}}}).Skip(page.skip()).Limit(page.limit()).All(&products)
+	return products
+}
+
+
+func (r *ProductRepository) GetByColorExists(exist bool,page Page) []Product {
+	var products []Product
+	r.C.Find(bson.M{"details.color":bson.M{"$exists":exist}}).Skip(page.skip()).Limit(page.limit()).All(&products)
+	return products
+}
+
+func (r *ProductRepository) GetByFirstTag(tag string,page Page) []Product {
+	var products []Product
+	r.C.Find(bson.M{"tags.0":tag}).Skip(page.skip()).Limit(page.limit()).All(&products)
 	return products
 }
 

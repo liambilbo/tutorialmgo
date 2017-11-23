@@ -109,12 +109,18 @@ func createUpdateProduct() Product {
 	return product
 }
 
-func TestProducts(t *testing.T) {
+func TestAll(t *testing.T) {
 	createUpdateProduct()
 	createProductIndexSlug()
+	createProductIndexTags()
 	createUpdateCategory()
+	createUpdateReview()
+	createUpdateOrder()
+	createUpdateUser()
     t.Run("P=1",FindProducts)
-	t.Run("C=1",FindProducts)
+	t.Run("C=1",FindCategories)
+	t.Run("R=1",FindReviews)
+	t.Run("U=1",FindReviews)
 }
 
 func FindProducts(t *testing.T) {
@@ -123,12 +129,24 @@ func FindProducts(t *testing.T) {
 
 	products=productRepository.GetByCategoryId("6a5b1476238d3b4dd5000048")
 	assert.NotZerof(t,len(products),"[GetByCategoryId] Product not founded")
+
+	products=productRepository.GetByColorExists(true,Page{1,1})
+	assert.NotZerof(t,len(products),"[GetByColorExists] Product not founded")
+
+	products=productRepository.GetByColorExists(false,Page{1,1})
+	assert.Zerof(t,len(products),"[GetByColorExists] Product founded")
+
+	products=productRepository.GetByFirstTag("tools",Page{1,1})
+	assert.NotZerof(t,len(products),"[GetByFirstTag] Product not founded")
+
+	products=productRepository.GetByFirstTag("soil",Page{1,1})
+	assert.Zerof(t,len(products),"[GetByFirstTag] Product founded")
 }
 
 func FindCategories(t *testing.T) {
 	product,err:=productRepository.GetBySlug("wheelbarrow-9092")
-	if err!=nil {
-		t.Fatalf("[GetBySlug] error fatal %s" , err.Error())
+	if err != nil {
+		t.Fail()
 	}
 
 	categories:=categoryRepository.GetCategoByIds(convertObjectIdToString(product.CategoryIds))
@@ -137,6 +155,39 @@ func FindCategories(t *testing.T) {
 
 func FindReviews(t *testing.T) {
 	product,err:=productRepository.GetBySlug("wheelbarrow-9092")
+	if err != nil {
+		t.Fail()
+	}
+
+	reviews :=reviewRepository.GetByProductId(product.Id.Hex(),Page{20,1})
+	assert.NotZerof(t,len(reviews),"[GetByProductId] Reviews not founded")
+}
+
+func FindUsers(t *testing.T) {
+
+	user,err:=userRepository.GetByNameAndPassword("kbanker","bd1cfa194c3a603e7186780824b04419")
+
+	if err != nil {
+		t.Fail()
+	}
+	assert.Equal(t,user.Id.Hex(),"4c4b1476238d3b4dd5000001","Error GetByNameAndPassword")
+
+	users:=userRepository.GetByLastName("Banker",Page{1,1})
+	assert.NotZerof(t,len(users),"[GetByLastName] Users not founded")
+	users=userRepository.GetByLastNamePattern("^Ba",Page{1,1})
+	assert.NotZerof(t,len(users),"[GetByLastNamePattern] Users not founded")
+	users=userRepository.GetByZip(10019,10040,Page{1,1})
+	assert.NotZerof(t,len(users),"[GetByZip] Users not founded")
+
+	users=userRepository.GetByFirstAddressState("NY",Page{1,1})
+	assert.NotZerof(t,len(users),"[GetByFirstAddressState] Users not founded")
+
+	users=userRepository.GetByAddressElem(bson.M{"name":"home","state":"NY"},Page{1,1})
+	assert.NotZerof(t,len(users),"[GetByAddressElem] Users not founded")
+
+
+
+	product,err:=productRepository.GetBySlug("wheelbarrow-9092")
 	if err!=nil {
 		t.Fatalf("[GetBySlug] error fatal %s" , err.Error())
 	}
@@ -144,7 +195,6 @@ func FindReviews(t *testing.T) {
 	reviews :=reviewRepository.GetByProductId(product.Id.Hex(),Page{20,1})
 	assert.NotZerof(t,len(reviews),"[GetByProductId] Reviews not founded")
 }
-
 
 
 func getProductById(id string) Product {
@@ -191,6 +241,33 @@ func createProductIndexSlug() {
 
 	index := mgo.Index{
 		Key: []string{"slug"},
+		Unique: true,
+		DropDups: true,
+		Background: true, // See notes.
+		Sparse: true,
+	}
+
+	productRepository.C.EnsureIndex(index)
+}
+
+func createProductIndexTags() {
+
+	index := mgo.Index{
+		Key: []string{"tags"},
+		Unique: true,
+		DropDups: true,
+		Background: true, // See notes.
+		Sparse: true,
+	}
+
+	productRepository.C.EnsureIndex(index)
+}
+
+
+func createUserIndexAddressState() {
+
+	index := mgo.Index{
+		Key: []string{"addresses.state"},
 		Unique: true,
 		DropDups: true,
 		Background: true, // See notes.
@@ -295,16 +372,4 @@ func createUpdateUser(){
 	if err:=userRepository.Create(&user); err!=nil {
 		log.Fatalf("[Creating User] %s",err)
 	}
-
-
-
-	userRepository.GetByNameAndPassword("kbanker","bd1cfa194c3a603e7186780824b04419")
-
-	users1:=userRepository.GetByLastName("Banker",Page{1,1})
-	users2:=userRepository.GetByLastNamePattern("^Ba",Page{1,1})
-	users3:=userRepository.GetByZip(10019,10040,Page{1,1})
-
-	fmt.Println(len(users1))
-	fmt.Println(len(users2))
-	fmt.Println(len(users3))
 }
