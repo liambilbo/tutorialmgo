@@ -86,3 +86,21 @@ func (r *ProductRepository) GetByFirstTag(tag string,page Page) []Product {
 	return products
 }
 
+
+func  (r *ProductRepository) LoadProductsByCategory() {
+	resp := []bson.M{}
+
+
+	pipe :=r.C.Pipe([]bson.M{
+		bson.M{"$project":bson.M{"category_ids":1}},
+		bson.M{"$unwind":"$category_ids"},
+		bson.M{"$group":bson.M{"_id":"$category_ids",
+			"count":bson.M{"$sum":1}}},
+		bson.M{"$out":"countsByCategory"},
+	})
+
+	pipe.All(&resp)
+
+	return
+}
+

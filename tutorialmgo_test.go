@@ -160,25 +160,24 @@ func FindReviews(t *testing.T) {
 		t.Fail()
 	}
 
-	reviews :=reviewRepository.GetByProductId(product.Id.Hex(),Page{20,1})
+	reviews :=reviewGRepository.GetByProductId(product.Id.Hex(),Page{20,1})
 	assert.NotZerof(t,len(reviews),"[GetByProductId] Reviews not founded")
 
-	reviews =reviewRepository.GetByWhere("function() { return this.helpful_votes > 2; }",Page{20,1})
+	reviews =reviewGRepository.GetByWhere("function() { return this.helpful_votes > 2; }",Page{20,1})
 	assert.NotZerof(t,len(reviews),"[GetByWhere] Reviews not founded")
 
-	reviews =reviewRepository.GetByWhere("function() { return this.helpful_votes > 2; }",Page{20,1})
+	reviews =reviewGRepository.GetByWhere("function() { return this.helpful_votes > 2; }",Page{20,1})
 	assert.NotZerof(t,len(reviews),"[GetByWhere] Reviews not founded")
 
-	reviews =reviewRepository.GetByWhere("(this.helpful_votes) > 2",Page{20,1})
+	reviews =reviewGRepository.GetByWhere("(this.helpful_votes) > 2",Page{20,1})
 	assert.NotZerof(t,len(reviews),"[GetByWhere] Reviews not founded")
 
-	reviews =reviewRepository.GetByText(bson.RegEx{"Wheel|worst"," i"},Page{20,1})
+	reviews =reviewGRepository.GetByText(bson.RegEx{"Wheel|worst"," i"},Page{20,1})
 	assert.NotZerof(t,len(reviews),"[GetByText] Reviews not founded")
 
-	average ,count:=reviewRepository.CountByProductId(product.Id.Hex())
+	average ,count:=reviewGRepository.CountByProductId(product.Id.Hex())
 	assert.Equal(t,1,count,"[CountByProduct] Count not equal 1")
 	assert.Equal(t,float64(4),average,"[CountByProduct] Average not equal 4")
-
 }
 
 func FindUsers(t *testing.T) {

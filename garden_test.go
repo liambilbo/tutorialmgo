@@ -50,6 +50,7 @@ func TestGardenAll(t *testing.T) {
 	t.Run("GC=1",FindGardenCategories)
 	t.Run("GR=1",FindGardenReviews)
 	t.Run("GU=1",FindGardenUsers)
+	t.Run("GO=1",FindGardenOrders)
 }
 
 func FindGardenProducts(t *testing.T) {
@@ -59,16 +60,19 @@ func FindGardenProducts(t *testing.T) {
 	products=productGRepository.GetByCategoryId("6a5b1476238d3b4dd5000048")
 	assert.NotZerof(t,len(products),"[GetByCategoryId] Product not founded")
 
-		products=productGRepository.GetByColorExists(true,Page{1,1})
-		assert.NotZerof(t,len(products),"[GetByColorExists] Product not founded")
+	products=productGRepository.GetByColorExists(true,Page{1,1})
+	assert.NotZerof(t,len(products),"[GetByColorExists] Product not founded")
 
-		products=productGRepository.GetByColorExists(false,Page{1,1})
-		assert.Zerof(t,len(products),"[GetByColorExists] Product founded")
+	products=productGRepository.GetByColorExists(false,Page{1,1})
+	assert.Zerof(t,len(products),"[GetByColorExists] Product founded")
 
-		products=productGRepository.GetByFirstTag("tools",Page{1,1})
-		assert.NotZerof(t,len(products),"[GetByFirstTag] Product not founded")
-		products=productGRepository.GetByFirstTag("soil",Page{1,1})
-		assert.Zerof(t,len(products),"[GetByFirstTag] Product founded")
+	products=productGRepository.GetByFirstTag("tools",Page{1,1})
+	assert.NotZerof(t,len(products),"[GetByFirstTag] Product not founded")
+	products=productGRepository.GetByFirstTag("soil",Page{1,1})
+	assert.Zerof(t,len(products),"[GetByFirstTag] Product founded")
+
+	productGRepository.LoadProductsByCategory()
+
 
 }
 
@@ -107,6 +111,9 @@ func FindGardenReviews(t *testing.T) {
 	assert.Equal(t,3,count,"[CountByProduct] Count not equal 1")
 	assert.Equal(t,float64(4.333333333333333),average,"[CountByProduct] Average not equal 4")
 
+	ratings:=reviewGRepository.CountRatingByProductId(product.Id.Hex())
+	assert.Equal(t,ratings[5],1,"[CountRatingByProductId] Count not equal 1")
+
 }
 
 func FindGardenUsers(t *testing.T) {
@@ -133,6 +140,18 @@ func FindGardenUsers(t *testing.T) {
 
 	users=userGRepository.GetByAddressSize(2,Page{1,1})
 	assert.NotZerof(t,len(users),"[GetByAddressSize] Users not founded")
+
+}
+
+
+func FindGardenOrders(t *testing.T) {
+
+	report:=orderGRepository.GetReportByMonthAfter(date("2017-01-20"))
+
+	reportline:=report["2014-8"]
+
+	assert.Equal(t,reportline.Number,2,"Error GetReportByMonthAfter")
+	assert.Equal(t,reportline.Subtotal,11093,"Error GetReportByMonthAfter")
 
 }
 

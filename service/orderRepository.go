@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"time"
+	"strconv"
 )
 
 type OrderRepository struct {
@@ -44,6 +46,36 @@ func (r *OrderRepository) getByQuery(query *mgo.Query) []Order {
 		orders = append(orders, result)
 	}
 	return orders
+}
+
+func (r *OrderRepository) GetReportByMonthAfter(since time.Time) map[string]struct{Number int;Subtotal int}{
+	result := make(map[string]struct{Number int;Subtotal int})
+
+	pipe:=[]bson.M{
+		bson.M{"$match":bson.M{"purchase_data":bson.M{"$gt":since}}},
+		bson.M{"$group":bson.M{"_id":bson.M{"year":bson.M{"$year":"$purchase_data"},
+		                                    "month":bson.M{"$month":"$purchase_data"}},
+								"count":bson.M{"$sum":1},
+								"subtotal":bson.M{"$sum":"$sub_total"}}},
+		bson.M{"$sort":bson.M{"_id":-1}},
+
+	}
+
+	var resp []bson.M
+	r.C.Pipe(pipe).All(&resp)
+
+	for _,v:= range resp {
+		id:=v["_id"].(bson.M)
+		year:=strconv.Itoa(id["year"].(int))
+		month:=strconv.Itoa(id["month"].(int))
+		result[year+"-"+month]= struct {
+			Number   int
+			Subtotal int
+		}{Number:v["count"].(int) , Subtotal:v["subtotal"].(int) }
+	}
+
+	return result
+
 }
 
 

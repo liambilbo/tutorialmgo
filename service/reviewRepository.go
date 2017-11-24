@@ -74,3 +74,24 @@ func  (r *ReviewRepository) CountByProductId(productId string) (average float64,
 
 	return
 }
+
+func  (r *ReviewRepository) CountRatingByProductId(productId string) map[int]int {
+	resp := []bson.M{}
+	pipe :=r.C.Pipe([]bson.M{
+		bson.M{"$match":bson.M{"product_id":bson.ObjectIdHex(productId)}},
+		bson.M{"$group":bson.M{"_id":"$rating",
+			"count":bson.M{"$sum":1}}},
+	})
+
+	pipe.All(&resp)
+
+	result:=make(map[int]int)
+
+	for _,v:=range resp {
+		r:=v["_id"]
+		c:=v["count"]
+		result[r.(int)]=c.(int)
+	}
+
+	return result
+}
