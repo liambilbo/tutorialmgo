@@ -115,6 +115,7 @@ func TestAll(t *testing.T) {
 	createProductIndexTags()
 	createUpdateCategory()
 	createUpdateReview()
+	createReviewIndexProductId()
 	createUpdateOrder()
 	createUpdateUser()
     t.Run("P=1",FindProducts)
@@ -174,6 +175,10 @@ func FindReviews(t *testing.T) {
 	reviews =reviewRepository.GetByText(bson.RegEx{"Wheel|worst"," i"},Page{20,1})
 	assert.NotZerof(t,len(reviews),"[GetByText] Reviews not founded")
 
+	average ,count:=reviewRepository.CountByProductId(product.Id.Hex())
+	assert.Equal(t,1,count,"[CountByProduct] Count not equal 1")
+	assert.Equal(t,float64(4),average,"[CountByProduct] Average not equal 4")
+
 }
 
 func FindUsers(t *testing.T) {
@@ -201,13 +206,6 @@ func FindUsers(t *testing.T) {
 	users=userRepository.GetByAddressSize(2,Page{1,1})
 	assert.NotZerof(t,len(users),"[GetByAddressSize] Users not founded")
 
-	product,err:=productRepository.GetBySlug("wheelbarrow-9092")
-	if err!=nil {
-		t.Fatalf("[GetBySlug] error fatal %s" , err.Error())
-	}
-
-	reviews :=reviewRepository.GetByProductId(product.Id.Hex(),Page{20,1})
-	assert.NotZerof(t,len(reviews),"[GetByProductId] Reviews not founded")
 }
 
 
@@ -229,6 +227,9 @@ func findReviewsOfAProduct(){
 	for _,v:=range reviews{
 		fmt.Printf("[Reviews of product %s] %s \n",product.Slug,v.Id.Hex())
 	}
+
+
+
 }
 
 
@@ -275,6 +276,19 @@ func createProductIndexTags() {
 	}
 
 	productRepository.C.EnsureIndex(index)
+}
+
+func createReviewIndexProductId() {
+
+	index := mgo.Index{
+		Key: []string{"product_id"},
+		Unique: true,
+		DropDups: true,
+		Background: true, // See notes.
+		Sparse: true,
+	}
+
+	reviewRepository.C.EnsureIndex(index)
 }
 
 

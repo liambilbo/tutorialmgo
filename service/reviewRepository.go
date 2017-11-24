@@ -1,7 +1,6 @@
 package service
 
 import (
-"fmt"
 "gopkg.in/mgo.v2"
 "gopkg.in/mgo.v2/bson"
 )
@@ -36,8 +35,9 @@ func (r *ReviewRepository) GetById(id string) (Review,error) {
 
 
 func (r *ReviewRepository) GetByProductId(id string,page Page) []Review {
-	query:=r.C.Find(bson.M{"product_id":bson.ObjectIdHex(id)}).Sort("-helpful_votes").Limit(page.limit()).Skip(page.skip())
-	return r.getByQuery(query)
+	var review []Review
+	r.C.Find(bson.M{"product_id":bson.ObjectIdHex(id)}).Sort("-helpful_votes").Limit(page.limit()).Skip(page.skip()).All(&review)
+	return review
 }
 
 
@@ -55,13 +55,22 @@ func (r *ReviewRepository) GetByText(regexp bson.RegEx,page Page) []Review {
 }
 
 
-func (r *ReviewRepository) getByQuery(query *mgo.Query) []Review {
-	iter := query.Iter()
-	var result Review
-	var reviews []Review
-	for iter.Next(&result) {
-		fmt.Printf("Result: %v\n", result.Id)
-		reviews = append(reviews, result)
-	}
-	return reviews
+func  (r *ReviewRepository) CountByProductId(productId string) (average float64,count int) {
+	//resp := []bson.M{}
+	resp := bson.M{}
+	pipe :=r.C.Pipe([]bson.M{
+		bson.M{"$match":bson.M{"product_id":bson.ObjectIdHex(productId)}},
+		bson.M{"$group":bson.M{"_id":"$product_id",
+		                       "average":bson.M{"$avg":"$rating"},
+		                       "count":bson.M{"$sum":1}}},
+	})
+
+	//pipe.All(&resp)
+
+	pipe.One(&resp)
+
+	if c,okc:=resp["count"];okc {count= c.(int)}
+	if a,okr:=resp["average"];okr {average= a.(float64)}
+
+	return
 }
