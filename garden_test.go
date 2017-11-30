@@ -41,16 +41,23 @@ func init() {
 
 	colreviews := session.DB("garden").C("reviews")
 	reviewGRepository = NewReviewRepository(colreviews)
+
+
+	//createGardenProductIndexSlug()
+	createGardenProductIndexText()
+	createGardenProductIndexTags()
+	createGardenReviewIndexProductId()
+	createGardenUserIndexAddressState()
 }
 
 
 
 func TestGardenAll(t *testing.T) {
-    t.Run("GP=1",FindGardenProducts)
-	t.Run("GC=1",FindGardenCategories)
-	t.Run("GR=1",FindGardenReviews)
+    //t.Run("GP=1",FindGardenProducts)
+	//t.Run("GC=1",FindGardenCategories)
+	//t.Run("GR=1",FindGardenReviews)
 	t.Run("GU=1",FindGardenUsers)
-	t.Run("GO=1",FindGardenOrders)
+	//t.Run("GO=1",FindGardenOrders)
 }
 
 func FindGardenProducts(t *testing.T) {
@@ -72,6 +79,8 @@ func FindGardenProducts(t *testing.T) {
 	assert.Zerof(t,len(products),"[GetByFirstTag] Product founded")
 
 	productGRepository.LoadProductsByCategory()
+	preport:=productGRepository.FindProductByText("gardens")
+	assert.Zerof(t,len(preport),"[FindProductByText] Product founded")
 
 
 }
@@ -125,6 +134,33 @@ func FindGardenUsers(t *testing.T) {
 	}
 	assert.Equal(t,user.Id.Hex(),"4c4b1476238d3b4dd5000001","Error GetByNameAndPassword")
 
+	address:=Address{Name:"mycasa",Zip:12003,Street:"Verca suena",City:"Larrabeyu",State:"BK"}
+	usernew,err:=userGRepository.UpdateAddress(user.Id.Hex(),address)
+
+
+	if err != nil {
+		t.Fail()
+	}
+	assert.Equal(t,usernew.Id,user.Id,"[UpdateAddress] Users not founded")
+
+
+	address=Address{Name:"mycasa",Zip:12003,Street:"Completan de rozas",City:"Larrabeyu",State:"BK"}
+	usernew,err=userGRepository.UpdateAddressFindModify(user.Id.Hex(),address)
+
+	if err != nil {
+		t.Fail()
+	}
+	assert.Equal(t,usernew.Id,user.Id,"[UpdateAddress] Users not founded")
+
+
+
+	usernew,err=userGRepository.RemoveAddress(user.Id.Hex(),address)
+
+	if err != nil {
+		t.Fail()
+	}
+	assert.Equal(t,usernew.Id,user.Id,"[RemoveAddress] Users not founded")
+
 	users:=userGRepository.GetByLastName("Banker",Page{1,1})
 	assert.NotZerof(t,len(users),"[GetByLastName] Users not founded")
 	users=userGRepository.GetByLastNamePattern("^Ba",Page{1,1})
@@ -141,6 +177,9 @@ func FindGardenUsers(t *testing.T) {
 	users=userGRepository.GetByAddressSize(2,Page{1,1})
 	assert.NotZerof(t,len(users),"[GetByAddressSize] Users not founded")
 
+
+
+
 }
 
 
@@ -152,6 +191,12 @@ func FindGardenOrders(t *testing.T) {
 
 	assert.Equal(t,reportline.Number,2,"Error GetReportByMonthAfter")
 	assert.Equal(t,reportline.Subtotal,11093,"Error GetReportByMonthAfter")
+
+
+	user:=orderGRepository.GetBestManhatanCustomer(date("2010-07-01"))
+	assert.Equal(t,user.UserId,"4c4b1476238d3b4dd5000002","Error GetBestManhatanCustomer")
+
+	orderGRepository.ReportCustomerOrders(date("2010-07-01"))
 
 }
 
@@ -167,7 +212,17 @@ func createGardenProductIndexSlug() {
 		Sparse: true,
 	}
 
-	productRepository.C.EnsureIndex(index)
+	productGRepository.C.EnsureIndex(index)
+}
+
+
+func createGardenProductIndexText() {
+
+	index := mgo.Index{
+		Key: []string{"$text:name","$text:description","$text:tags"},
+	}
+
+	productGRepository.C.EnsureIndex(index)
 }
 
 func createGardenProductIndexTags() {
@@ -180,7 +235,7 @@ func createGardenProductIndexTags() {
 		Sparse: true,
 	}
 
-	productRepository.C.EnsureIndex(index)
+	productGRepository.C.EnsureIndex(index)
 }
 
 func createGardenReviewIndexProductId() {
@@ -193,7 +248,7 @@ func createGardenReviewIndexProductId() {
 		Sparse: true,
 	}
 
-	reviewRepository.C.EnsureIndex(index)
+	reviewGRepository.C.EnsureIndex(index)
 }
 
 
@@ -207,5 +262,5 @@ func createGardenUserIndexAddressState() {
 		Sparse: true,
 	}
 
-	productRepository.C.EnsureIndex(index)
+	productGRepository.C.EnsureIndex(index)
 }
