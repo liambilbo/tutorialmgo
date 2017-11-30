@@ -104,3 +104,15 @@ func  (r *ProductRepository) LoadProductsByCategory() {
 	return
 }
 
+
+func (r *ProductRepository) FindProductByText(text string) []struct{Name string; Description string;Tags []string}{
+
+	var result []struct{Name string; Description string;Tags []string}
+
+	r.C.Find(bson.M{"$text":bson.M{"$search":text}}).Select(bson.M{"_id":0,"name":1,"description":1,"tags":1}).All(&result)
+
+	return result
+
+}
+
+

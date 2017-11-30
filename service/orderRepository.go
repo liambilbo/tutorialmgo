@@ -6,6 +6,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"time"
 	"strconv"
+	"log"
 )
 
 type OrderRepository struct {
@@ -78,5 +79,45 @@ func (r *OrderRepository) GetReportByMonthAfter(since time.Time) map[string]stru
 
 }
 
+
+func (r *OrderRepository) GetBestManhatanCustomer(since time.Time)struct{UserId string;Subtotal int}{
+	pipe:=[]bson.M{
+		bson.M{"$match":bson.M{"shipping_address.zip":bson.M{"$gte":10019,"$lt":10040}}},
+		bson.M{"$group":bson.M{"_id":"$user_id",
+			"subtotal":bson.M{"$sum":"$sub_total"}}},
+		bson.M{"$match":bson.M{"subtotal":bson.M{"$gte":10}}},
+		bson.M{"$sort":bson.M{"subtotal":-1}},
+		bson.M{"$limit":1},
+
+	}
+
+	var resp bson.M
+	err:=r.C.Pipe(pipe).One(&resp)
+
+	if (err!=nil) {
+		log.Fatalf("[Error] %s",err.Error())
+	}
+
+
+	return struct {
+		UserId   string
+		Subtotal int
+	}{UserId:resp["_id"].(bson.ObjectId).Hex() , Subtotal: resp["subtotal"].(int)}
+
+}
+
+
+func (r *OrderRepository) ReportCustomerOrders(since time.Time){
+	pipe:=[]bson.M{
+		bson.M{"$project":bson.M{"user_id":1,"line_items":1}},
+		bson.M{"$unwind":"$line_items"},
+		bson.M{"$group":bson.M{"_id":"$user_id","purchasedItems":bson.M{"$push":"$line_items"}}},
+		bson.M{"$out":"purchasedByUser"},
+	}
+
+	r.C.Pipe(pipe)
+
+	return
+}
 
 

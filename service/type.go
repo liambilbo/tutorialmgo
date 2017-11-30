@@ -109,6 +109,21 @@ type Review struct {
 	VoterIds []bson.ObjectId `bson:"voter_ids" json:"voter_ids"`
 }
 
+type Book struct {
+	Id bson.ObjectId `bson:"_id" json:"id"`
+	Title string `bson:"title" json:"title"`
+	Isbn string `bson:"isbn" json:"isbn"`
+	PageCount int `bson:"pageCount" json:"pageCount"`
+	PublishedDate time.Time `bson:"publishedDate" json:"publishedDate"`
+	TumnnailUrl string `bson:"tumnnailUrl" json:"tumnnailUrl"`
+	LongDescription string `bson:"longDescription" json:"longDescription"`
+	Status string `bson:"longDescription" json:"longDescription"`
+	Authors []string `bson:"authors" json:"authors"`
+	Categories []string `bson:"categories" json:"categories"`
+}
+
+
+
 type Page struct{
 	Size int
 	Number int

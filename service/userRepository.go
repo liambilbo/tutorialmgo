@@ -3,6 +3,7 @@ package service
 import (
 "gopkg.in/mgo.v2"
 "gopkg.in/mgo.v2/bson"
+	"log"
 )
 
 type UserRepository struct {
@@ -76,3 +77,56 @@ func (r *UserRepository) GetByAddressSize(size int,page Page) []User {
 	r.C.Find(bson.M{"addresses":bson.M{"$size":size}}).Skip(page.skip()).Limit(page.limit()).All(&users)
 	return users
 }
+
+
+func (r *UserRepository) UpdateAddress(userId string,address Address) (User,error) {
+	var user User
+
+	_,err:=r.C.Upsert(bson.M{"_id":bson.ObjectIdHex(userId),"addresses.name":address.Name},bson.M{"$set":bson.M{"addresses.$":address}})
+	if err!=nil{
+		_,err=r.C.Upsert(bson.M{"_id":bson.ObjectIdHex(userId)},bson.M{"$push":bson.M{"addresses":address}})
+	}
+
+	if err!=nil {
+		log.Fatalf("Error %s",err.Error())
+	}
+
+	user,err=r.GetById(userId)
+    return user,err
+}
+
+
+func (r *UserRepository) RemoveAddress(userId string,address Address) (User,error) {
+	var user User
+
+	_,err:=r.C.Upsert(bson.M{"_id":bson.ObjectIdHex(userId),"addresses.name":address.Name},bson.M{"$pull":bson.M{"addresses":bson.M{"name":address.Name}}})
+
+	if err!=nil {
+		log.Fatalf("Error %s",err.Error())
+	}
+
+	user,err=r.GetById(userId)
+	return user,err
+}
+
+
+func (r *UserRepository) UpdateAddressFindModify(userId string,address Address) (User,error) {
+	var user User
+
+	change:=mgo.Change{Update:bson.M{"$set":bson.M{"addresses.$":address}},Remove:false,ReturnNew:true,Upsert:true}
+	_, err:=r.C.Find(bson.M{"_id":bson.ObjectIdHex(userId),"addresses.name":address.Name}).Apply(change,&user)
+
+	if err!=nil{
+		change:=mgo.Change{Update:bson.M{"$push":bson.M{"addresses":address}},Remove:false,ReturnNew:true,Upsert:true}
+		_, err=r.C.Find(bson.M{"_id":bson.ObjectIdHex(userId)}).Apply(change,&user)
+	}
+
+	if err!=nil {
+		log.Fatalf("Error %s",err.Error())
+	}
+
+
+	return user,err
+}
+
+
